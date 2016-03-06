@@ -853,6 +853,17 @@ class DynamixelIO(object):
         # return the data in a dictionary
         return {'min':cwLimit, 'max':ccwLimit}
 
+    def get_max_torque(self, servo_id):
+        """
+        Returns the max torque from the specified servo (the value which is stored in the EEPROM).
+        """
+        # read in 2 consecutive bytes starting with low value of torque max
+        response = self.read(servo_id, DXL_MAX_TORQUE_L, 2)
+        if response:
+            self.exception_on_error(response[4], servo_id, 'fetching max torque')
+
+        return response[5] + (response[6] << 8)
+
     def get_drive_mode(self, servo_id):
         """ Reads the servo's drive mode. """
         response = self.read(servo_id, DXL_DRIVE_MODE, 1)
