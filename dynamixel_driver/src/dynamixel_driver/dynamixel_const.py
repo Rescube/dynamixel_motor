@@ -107,6 +107,9 @@ DXL_GOAL_TORQUE_L = 71
 DXL_GOAL_TORQUE_H = 72
 DXL_GOAL_ACCELERATION = 73
 
+# this is not an offset but a feature which needs to be checked
+DXL_SPRINGRC_TORQUE_HACK = 4242
+
 # Status Return Levels
 DXL_RETURN_NONE = 0
 DXL_RETURN_READ = 1
@@ -282,7 +285,7 @@ DXL_MODEL_TO_PARAMS = \
            'torque_per_volt':    1.8 / 12.0,                       #  1.8 NM @ 12V
            'velocity_per_volt':  (62 * RPM_TO_RADSEC) / 12.0,      #  45 RPM @ 12.0V
            'rpm_per_tick':       0.114,
-           'features':           []
+           'features':           [DXL_SPRINGRC_TORQUE_HACK]
          },
 }
 

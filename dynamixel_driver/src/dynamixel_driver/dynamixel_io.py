@@ -42,6 +42,7 @@ __maintainer__ = 'Antons Rebguns'
 __email__ = 'anton@email.arizona.edu'
 
 
+import rospy
 import time
 import serial
 from array import array
@@ -567,7 +568,20 @@ class DynamixelIO(object):
         loVal = int(torque % 256)
         hiVal = int(torque >> 8)
 
-        response = self.write(servo_id, DXL_TORQUE_LIMIT_L, (loVal, hiVal))
+        model = self.get_model_number(servo_id)
+        if not model in DXL_MODEL_TO_PARAMS:
+            raise UnsupportedFeatureError(model, DXL_SPRINGRC_TORQUE_HACK)
+
+        command = DXL_TORQUE_LIMIT_L
+        # SpringRC SR-518 has different registers at the address of DXL_TORQUE_LIMIT_L
+        # and unfortunatelly the torque limitation only can be done by writing it to the EEPROM too
+        # EEPROM has limited write count, so throw a warning here
+        if DXL_SPRINGRC_TORQUE_HACK in DXL_MODEL_TO_PARAMS[model]['features']:
+            command = DXL_MAX_TORQUE_L
+            rospy.logwarn('SpringRC SR-518 supports torque limit change only with saving to EEPROM.')
+            rospy.logwarn('Modifying torque limit this too many times may cause EEPROM corruption!')
+
+        response = self.write(servo_id, command, (loVal, hiVal))
         if response:
             self.exception_on_error(response[4], servo_id, 'setting torque limit to %d' % torque)
         return response
@@ -777,10 +791,26 @@ class DynamixelIO(object):
             # split torque into 2 bytes
             loVal = int(torque % 256)
             hiVal = int(torque >> 8)
-            writeableVals.append( (sid, loVal, hiVal) )
 
-        # use sync write to broadcast multi servo message
-        self.sync_write(DXL_TORQUE_LIMIT_L, writeableVals)
+            model = self.get_model_number(sid)
+            if not model in DXL_MODEL_TO_PARAMS:
+                raise UnsupportedFeatureError(model, DXL_SPRINGRC_TORQUE_HACK)
+
+            command = DXL_TORQUE_LIMIT_L
+            # SpringRC SR-518 has different registers at the address of DXL_TORQUE_LIMIT_L
+            # and unfortunatelly the torque limitation only can be done by writing it to the EEPROM too
+            # EEPROM has limited write count, so throw a warning here
+            if DXL_SPRINGRC_TORQUE_HACK in DXL_MODEL_TO_PARAMS[model]['features']:
+                self.sync_write(DXL_MAX_TORQUE_L, [(sid, loVal, hiVal)])
+                rospy.logwarn("SpringRC SR-518 supports torque limit change only with saving to EEPROM.")
+                rospy.logwarn("Modifying torque limit this too many times may cause EEPROM corruption!")
+            else :
+                writeableVals.append( (sid, loVal, hiVal) )
+
+        # if all of the servos were SpringRC then the writeableVals will be empty
+        if (len(writeableVals)) :
+            # use sync write to broadcast multi servo message
+            self.sync_write(DXL_TORQUE_LIMIT_L, writeableVals)
 
     def set_multi_position_and_speed(self, valueTuples):
         """
