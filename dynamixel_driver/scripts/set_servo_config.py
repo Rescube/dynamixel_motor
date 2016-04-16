@@ -72,7 +72,9 @@ if __name__ == '__main__':
                       help='set servo motor minimum voltage limit')
     parser.add_option('--max-voltage-limit', type='int', metavar='MAX_VOLTAGE', dest='max_voltage_limit',
                       help='set servo motor maximum voltage limit')
-                      
+    parser.add_option('--max-torque', type='int', metavar='MAX_TORQUE', dest='max_torque',
+                      help='set servo motor maximum torque limit')
+
     (options, args) = parser.parse_args(sys.argv)
     print options
     
@@ -139,6 +141,11 @@ if __name__ == '__main__':
                     print 'Setting maximum voltage limit to %d' % options.max_voltage_limit
                     dxl_io.set_voltage_limit_max(motor_id, options.max_voltage_limit)
                     
+                # check if maximum torque needs to be changed
+                if options.max_torque:
+                    print 'Setting torque limit to %d' % options.max_torque
+                    dxl_io.set_max_torque(motor_id, options.max_torque)
+
                 print 'done'
             else:
                 print 'Unable to connect to Dynamixel motor with ID %d' % motor_id

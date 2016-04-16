@@ -314,6 +314,18 @@ class DynamixelIO(object):
             self.exception_on_error(response[4], servo_id, 'setting CCW angle limits to %d' % angle_ccw)
         return response
 
+    def set_max_torque(self, servo_id, torque_limit):
+        """
+        Set the max torque limit.
+        """
+        loVal = int(torque_limit % 256)
+        hiVal = int(torque_limit >> 8)
+
+        response = self.write(servo_id, DXL_MAX_TORQUE_L, (loVal, hiVal))
+        if response:
+            self.exception_on_error(response[4], servo_id, 'setting torque limit to %d' % torque_limit)
+        return response
+
     def set_angle_limits(self, servo_id, min_angle, max_angle):
         """
         Set the min (CW) and max (CCW) angle of rotation limits.

@@ -95,12 +95,16 @@ if __name__ == '__main__':
                       
     (options, args) = parser.parse_args(sys.argv)
     
-    if len(args) < 2:
+    if len(args) < 1:
         parser.print_help()
         exit(1)
         
     port = options.port
+    if port == '':
+        port = "/dev/ttyUSB0"
     baudrate = options.baud
+    if baudrate == '' :
+        baudrate = 500000
     motor_ids = args[1:]
     
     try:
